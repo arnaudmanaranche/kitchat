@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Title of the document</title>
+<link rel="stylesheet" type="text/css" href="main.css">
+</head>
+
+<body>
+
+    {% for message in messages %}
+        <p>{{ message.expediteur.pseudo }} dit {{ message.content }} </p>
+    {% endfor %}
+
+    <form action="/" method="post">
+        <input type="text" name="content" placeholder="Message" required />
+        <input type="submit" value="Envoyer" />
+    </form>
+
+    <a href="/logout">Logout</a>
+
+</body>
+
+</html>
+

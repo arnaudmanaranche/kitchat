@@ -1,0 +1,19 @@
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #FBFBFB;
+    text-align: center;
+}
+
+h1 {
+    padding: 20px;
+}
+
+p {
+    text-decoration: underline;
+    padding: 20px;
+}
