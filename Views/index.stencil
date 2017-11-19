@@ -1,20 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Title of the document</title>
-<link rel="stylesheet" type="text/css" href="main.css">
-</head>
+{% extends "base.stencil" %}
 
-<body>
+{% block title %}Welcome{% endblock %}
 
-    <h2>Merci de vous connecter</h2>
-
-    <form action="/room" method="post">
-        <input type="text" name="pseudo" placeholder="Pseudo" required />
-        <input type="submit" value="Se connecter" />
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-3">Hello, world!</h1>
+    <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
+    <hr class="my-4">
+    <form method="post" action="/rooms">
+        <p>
+            <input type="text" placeholder="Your Pseudo" name="pseudo" required="required" />
+        </p>
+        <p class="lead">
+            <button type="submit" class="btn btn-primary btn-lg">Login</button>
+        </p>
     </form>
-
-</body>
-
-</html>
-
+</div>
+{% endblock %}

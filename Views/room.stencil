@@ -1,24 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Title of the document</title>
-<link rel="stylesheet" type="text/css" href="main.css">
-</head>
+{% extends "base.stencil" %}
 
-<body>
+{% block title %}Welcome{% endblock %}
 
-    {% for message in messages %}
-        <p>{{ message.expediteur.pseudo }} dit {{ message.content }} </p>
-    {% endfor %}
+{% block content %}
+    <div class="col">
+        {% for message in messages %}
+            <div class="row-12">
+                <div class="col">
+                    {{ message.date }}
+                </div>
+                <div class="col">{{ message.expediteur.pseudo }} dit {{ message.content }}</div>
+            </div>
+        {% endfor %}
+    </div>
 
-    <form action="/" method="post">
-        <input type="text" name="content" placeholder="Message" required />
-        <input type="submit" value="Envoyer" />
-    </form>
-
-    <a href="/logout">Logout</a>
-
-</body>
-
-</html>
-
+<div class="footer navbar-fixed-bottom">
+<form action="/chat" method="post">
+    <input type="text" name="content" placeholder="Message" required />
+    <input type="submit" value="Envoyer" />
+</form>
+</div>
+{% endblock %}

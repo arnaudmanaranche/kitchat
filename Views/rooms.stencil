@@ -1,0 +1,8 @@
+{% extends "base.stencil" %}
+
+{% block title %}Welcome {{ sessionState.pseudo }}{% endblock %}
+
+{% block content %}
+    <h2>Choose your room</h2>
+    <a href="localhost:8080/rooms/1">Room 1</a>
+{% endblock %}

@@ -4,75 +4,73 @@ import KituraSession
 import Foundation
 import SwiftyJSON
 
-// Struc User
+// Structure User
 struct User {
     var pseudo:String
 }
 
-// Struc Message
+// Structure Message
 struct Message {
     var content:String
     var expediteur:User
+    var date = Date()
 }
 
 var users = [User]()
 var messages = [Message]()
 
-// Where we will store the current session data
-var sess: SessionState?
-
-// Initialising our KituraSession
+// Store the current session data
+var sessionState: SessionState?
+// Initialising the session
 let session = Session(secret: "kitura_session")
 
-// Create a new router
 let router = Router()
 
+// Router Information
 router.all("/", middleware: BodyParser(), StaticFileServer(path: "./Public"), session)
-
 router.setDefault(templateEngine: StencilTemplateEngine())
 
-// Handle HTTP GET requests to /hello/:user
 router.get("/") { request, response, next in
     
-    //Again get the current session
-    sess = request.session
+    // Get the current session
+    sessionState = request.session
     
     //Check if we have a session and it has a value for email
-    if let sess = sess, let pseudo = sess["pseudo"].string {
-        try response.render("index", context: ["users": users, "messages": messages]).end()
+    if let sessionState = sessionState, let pseudo = sessionState["pseudo"].string {
+        try response.render("rooms", context: [
+            "users": users,
+            "messages": messages,
+            "sessionState": sessionState,
+            ]).end()
     } else {
         try response.render("index", context: ["users": users]).end()
     }
-    
-    next()
 }
 
-router.post("/") { request, response, next in
+router.post("/rooms/:id") { request, response, next in
     
     if let body = request.body {
-        
         switch body {
         case .urlEncoded(let params):
             let content = params["content"] ?? ""
-            let pseudo = sess!["pseudo"].string ?? ""
+            let pseudo = sessionState!["pseudo"].string ?? ""
             let expediteur = User(pseudo: pseudo)
+            let date = Date()
             
             users.append(User(pseudo: pseudo))
-            messages.append(Message(content: content, expediteur: expediteur))
+            messages.append(Message(content: content, expediteur: expediteur, date: date))
             
-            try response.render("room", context: ["users": users, "messages": messages]).end()
+            try response.render("room", context: ["users": users, "messages": messages, "sessionState": sessionState]).end()
         default:
             try response.redirect("/error").end()
         }
     }
-    
     next()
 }
 
-router.post("/room") { request, response, next in
-    
-    //Get current session
-    sess = request.session
+router.post("/rooms") { request, response, next in
+    // Get the current session
+    sessionState = request.session
     
     var maybePseudo: String?
     
@@ -82,18 +80,18 @@ router.post("/room") { request, response, next in
     default: break
     }
     
-    if let pseudo = maybePseudo, let sess = sess {
-        sess["pseudo"] = JSON(pseudo)
-        try response.render("room", context: ["user": "pseudo"]).end()
+    if let pseudo = maybePseudo, let sessionState = sessionState {
+        sessionState["pseudo"] = JSON(pseudo)
+        try response.render("rooms", context: [
+            "users": users,
+            "messages": messages,
+            "sessionState": sessionState,
+            ]).end()
     }
-    
 }
 
-router.get("/logout") {
-    request, response, next in
-    
-    //Destroy all data in our session
-    sess?.destroy() {
+router.get("/logout") { request, response, next in
+    sessionState?.destroy() {
         (error: NSError?) in
         if let error = error {
         }
@@ -101,17 +99,14 @@ router.get("/logout") {
     try response.render("index", context: ["users": users, "messages": messages]).end()
 }
 
-// Resolve the port that we want the server to listen on.
 let port: Int
 let defaultPort = 8080
+
 if let requestedPort = ProcessInfo.processInfo.environment["PORT"] {
     port = Int(requestedPort) ?? defaultPort
 } else {
     port = defaultPort
 }
 
-// Add an HTTP server and connect it to the router
 Kitura.addHTTPServer(onPort: port, with: router)
-
-// Start the Kitura runloop (this call never returns)
 Kitura.run()
