@@ -13,11 +13,16 @@ struct User {
 struct Message {
     var content:String
     var expediteur:User
-    var date = Date()
+    var date:Any
 }
 
 var users = [User]()
 var messages = [Message]()
+
+let dateFormatter = DateFormatter()
+
+dateFormatter.dateStyle = .full
+dateFormatter.timeStyle = .full
 
 // Store the current session data
 var sessionState: SessionState?
@@ -36,7 +41,7 @@ router.get("/") { request, response, next in
     sessionState = request.session
     
     //Check if we have a session and it has a value for email
-    if let sessionState = sessionState, let pseudo = sessionState["pseudo"].string {
+    if let sessionState = sessionState {
         try response.render("room", context: [
             "users": users,
             "messages": messages,
@@ -56,11 +61,12 @@ router.post("/room") { request, response, next in
             let pseudo = sessionState!["pseudo"].string ?? ""
             let expediteur = User(pseudo: pseudo)
             let date = Date()
+            let convertedDate: String = dateFormatter.string(from: date)
             
             users.append(User(pseudo: pseudo))
-            messages.append(Message(content: content, expediteur: expediteur, date: date))
+            messages.append(Message(content: content, expediteur: expediteur, date: convertedDate))
             
-            try response.render("room", context: ["users": users, "messages": messages, "sessionState": sessionState]).end()
+            try response.render("room", context: ["users": users, "messages": messages, "sessionState": sessionState as Any]).end()
         default:
             try response.redirect("/error").end()
         }
@@ -70,7 +76,7 @@ router.post("/room") { request, response, next in
 
 router.get("/room") { request, response, next in
     
-    if let sessionState = sessionState, let pseudo = sessionState["pseudo"].string {
+    if let sessionState = sessionState {
         try response.render("room", context: [
             "users": users,
             "messages": messages,
@@ -106,8 +112,7 @@ router.post("/") { request, response, next in
 router.get("/logout") { request, response, next in
     sessionState?.destroy() {
         (error: NSError?) in
-        if let error = error {
-        }
+        if error != nil {}
     }
     try response.render("index", context: ["users": users, "messages": messages]).end()
 }

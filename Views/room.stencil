@@ -11,7 +11,7 @@
                 <td>
                     <div>{{ message.expediteur.pseudo }} dit {{ message.content }}</div>
                 </td>
-                <td>{{ message.date }}</td>
+                <td time-ago="{{ message.date }}"></td>
             </tr>
         {% endfor %}
         </tbody>
