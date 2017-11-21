@@ -70,12 +70,15 @@ router.post("/room") { request, response, next in
 
 router.get("/room") { request, response, next in
     
-    try response.render("room", context: [
+    if let sessionState = sessionState, let pseudo = sessionState["pseudo"].string {
+        try response.render("room", context: [
             "users": users,
             "messages": messages,
-            "sessionState": sessionState
-        ]).end()
-    next()
+            "sessionState": sessionState,
+            ]).end()
+    } else {
+        try response.render("index", context: ["users": users]).end()
+    }
 }
 
 router.post("/") { request, response, next in
