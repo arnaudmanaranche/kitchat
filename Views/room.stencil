@@ -1,23 +1,31 @@
 {% extends "base.stencil" %}
 
-{% block title %}Welcome{% endblock %}
+{% block title %}Kitchat | Connected {% endblock %}
+{% block meta %} <meta http-equiv="refresh" content="15"> {% endblock %}
 
 {% block content %}
-    <div class="col">
+    <table class="table table-hover">
+        <tbody>
         {% for message in messages %}
-            <div class="row-12">
-                <div class="col">
-                    {{ message.date }}
-                </div>
-                <div class="col">{{ message.expediteur.pseudo }} dit {{ message.content }}</div>
-            </div>
+            <tr>
+                <td>
+                    <div>{{ message.expediteur.pseudo }} dit {{ message.content }}</div>
+                </td>
+                <td>{{ message.date }}</td>
+            </tr>
         {% endfor %}
-    </div>
-
-<div class="footer navbar-fixed-bottom">
-<form action="/chat" method="post">
-    <input type="text" name="content" placeholder="Message" required />
-    <input type="submit" value="Envoyer" />
-</form>
-</div>
+        </tbody>
+    </table>
+    <table class="table">
+        <tfooter>
+            <form action="/room" method="post">
+                <td>
+                    <input autofocus class="form-control" type="text" name="content" placeholder="Message" required />
+                </td>
+                <td>
+                    <button type="submit" class="btn btn-primary">Send my message</button>
+                </td>
+            </form>
+        </tfooter>
+    </table>
 {% endblock %}

@@ -1,18 +1,17 @@
 {% extends "base.stencil" %}
 
-{% block title %}Welcome{% endblock %}
+{% block title %}Have a break, have a kitchat ?{% endblock %}
 
 {% block content %}
 <div class="jumbotron">
-    <h1 class="display-3">Hello, world!</h1>
-    <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
+    <h1 class="display-3">Have a break, have a kitchat ?</h1>
     <hr class="my-4">
-    <form method="post" action="/rooms">
+    <form method="post" action="/">
         <p>
             <input type="text" placeholder="Your Pseudo" name="pseudo" required="required" />
         </p>
         <p class="lead">
-            <button type="submit" class="btn btn-primary btn-lg">Login</button>
+            <button type="submit" class="btn btn-primary btn-lg">Login into Kitchat</button>
         </p>
     </form>
 </div>

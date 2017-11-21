@@ -37,7 +37,7 @@ router.get("/") { request, response, next in
     
     //Check if we have a session and it has a value for email
     if let sessionState = sessionState, let pseudo = sessionState["pseudo"].string {
-        try response.render("rooms", context: [
+        try response.render("room", context: [
             "users": users,
             "messages": messages,
             "sessionState": sessionState,
@@ -47,7 +47,7 @@ router.get("/") { request, response, next in
     }
 }
 
-router.post("/rooms/:id") { request, response, next in
+router.post("/room") { request, response, next in
     
     if let body = request.body {
         switch body {
@@ -68,7 +68,17 @@ router.post("/rooms/:id") { request, response, next in
     next()
 }
 
-router.post("/rooms") { request, response, next in
+router.get("/room") { request, response, next in
+    
+    try response.render("room", context: [
+            "users": users,
+            "messages": messages,
+            "sessionState": sessionState
+        ]).end()
+    next()
+}
+
+router.post("/") { request, response, next in
     // Get the current session
     sessionState = request.session
     
@@ -82,7 +92,7 @@ router.post("/rooms") { request, response, next in
     
     if let pseudo = maybePseudo, let sessionState = sessionState {
         sessionState["pseudo"] = JSON(pseudo)
-        try response.render("rooms", context: [
+        try response.render("room", context: [
             "users": users,
             "messages": messages,
             "sessionState": sessionState,
