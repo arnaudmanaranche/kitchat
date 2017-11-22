@@ -19,11 +19,6 @@ struct Message {
 var users = [User]()
 var messages = [Message]()
 
-let dateFormatter = DateFormatter()
-
-dateFormatter.dateStyle = .full
-dateFormatter.timeStyle = .full
-
 // Store the current session data
 var sessionState: SessionState?
 // Initialising the session
@@ -61,10 +56,9 @@ router.post("/room") { request, response, next in
             let pseudo = sessionState!["pseudo"].string ?? ""
             let expediteur = User(pseudo: pseudo)
             let date = Date()
-            let convertedDate: String = dateFormatter.string(from: date)
             
             users.append(User(pseudo: pseudo))
-            messages.append(Message(content: content, expediteur: expediteur, date: convertedDate))
+            messages.append(Message(content: content, expediteur: expediteur, date: date))
             
             try response.render("room", context: ["users": users, "messages": messages, "sessionState": sessionState as Any]).end()
         default:
