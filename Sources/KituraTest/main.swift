@@ -2,123 +2,83 @@ import Kitura
 import KituraStencil
 import KituraSession
 import Foundation
+import SwiftKuery
 import SwiftyJSON
-
-// Structure User
-struct User {
-    var pseudo:String
-}
-
-// Structure Message
-struct Message {
-    var content:String
-    var expediteur:User
-    var date:Any
-}
-
-var users = [User]()
-var messages = [Message]()
-
-// Store the current session data
-var sessionState: SessionState?
-// Initialising the session
-let session = Session(secret: "kitura_session")
+import SwiftKueryPostgreSQL
 
 let router = Router()
 
 // Router Information
-router.all("/", middleware: BodyParser(), StaticFileServer(path: "./Public"), session)
+router.all("/", middleware: BodyParser(), StaticFileServer(path: "./Public"))
 router.setDefault(templateEngine: StencilTemplateEngine())
 
-router.get("/") { request, response, next in
-    
-    // Get the current session
-    sessionState = request.session
-    
-    //Check if we have a session and it has a value for email
-    if let sessionState = sessionState {
-        try response.render("room", context: [
-            "users": users,
-            "messages": messages,
-            "sessionState": sessionState,
-            ]).end()
-    } else {
-        try response.render("index", context: ["users": users]).end()
-    }
+// Class Users
+class Grades : Table {
+    let tableName = "grades"
+    let key = Column("key")
+    let course = Column("course")
+    let grade = Column("grade")
+    let studentId = Column("studentId")
 }
 
-router.post("/room") { request, response, next in
-    
-    if let body = request.body {
-        switch body {
-        case .urlEncoded(let params):
-            let content = params["content"] ?? ""
-            let pseudo = sessionState!["pseudo"].string ?? ""
-            let expediteur = User(pseudo: pseudo)
-            let date = Date()
+let grades = Grades()
+
+let connection = PostgreSQLConnection(host: "localhost", port: 5432, options: [.databaseName("kitchat")])
+
+func grades(_ callback:@escaping (String)->Void) -> Void {
+    connection.connect() { error in
+        if let error = error {
+            callback("Error is \(error)")
+            return
+        }
+        else {
+            // Build and execute your query here.
             
-            users.append(User(pseudo: pseudo))
-            messages.append(Message(content: content, expediteur: expediteur, date: date))
+            // First build query
+            let query = Select(grades.course, grades.grade, from: grades)
             
-            try response.render("room", context: ["users": users, "messages": messages, "sessionState": sessionState as Any]).end()
-        default:
-            try response.redirect("/error").end()
+            connection.execute(query: query) { result in
+                if let resultSet = result.asResultSet {
+                    var retString = ""
+                    
+                    for title in resultSet.titles {
+                        // The column names of the result.
+                        retString.append("\(title.padding(toLength: 35, withPad: " ", startingAt: 0))")
+                    }
+                    retString.append("\n")
+                    
+                    for row in resultSet.rows {
+                        for value in row {
+                            if let value = value {
+                                let valueString = String(describing: value)
+                                retString.append("\(valueString.padding(toLength: 35, withPad: " ", startingAt: 0))")
+                            }
+                        }
+                        retString.append("\n")
+                    }
+                    callback(retString)
+                }
+                else if let queryError = result.asError {
+                    // Something went wrong.
+                    callback("Something went wrong \(queryError)")
+                }
+            }
         }
     }
-    next()
 }
 
-router.get("/room") { request, response, next in
+router.get("/") {
+    request, response, next in
     
-    if let sessionState = sessionState {
-        try response.render("room", context: [
-            "users": users,
-            "messages": messages,
-            "sessionState": sessionState,
-            ]).end()
-    } else {
-        try response.render("index", context: ["users": users]).end()
+    grades() {
+        resp in
+        response.send(resp)
+        next()
     }
 }
 
-router.post("/") { request, response, next in
-    // Get the current session
-    sessionState = request.session
-    
-    var maybePseudo: String?
-    
-    switch request.body {
-    case .urlEncoded(let params)?:
-        maybePseudo = params["pseudo"]
-    default: break
-    }
-    
-    if let pseudo = maybePseudo, let sessionState = sessionState {
-        sessionState["pseudo"] = JSON(pseudo)
-        try response.render("room", context: [
-            "users": users,
-            "messages": messages,
-            "sessionState": sessionState,
-            ]).end()
-    }
-}
-
-router.get("/logout") { request, response, next in
-    sessionState?.destroy() {
-        (error: NSError?) in
-        if error != nil {}
-    }
-    try response.render("index", context: ["users": users, "messages": messages]).end()
-}
-
-let port: Int
-let defaultPort = 8080
-
-if let requestedPort = ProcessInfo.processInfo.environment["PORT"] {
-    port = Int(requestedPort) ?? defaultPort
-} else {
-    port = defaultPort
-}
+// Use port 8080 unless overridden by environment variable
+let port = Int(ProcessInfo.processInfo.environment["PORT"] ?? "8080") ?? 8080
 
 Kitura.addHTTPServer(onPort: port, with: router)
 Kitura.run()
