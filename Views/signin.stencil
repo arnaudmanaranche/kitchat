@@ -1,0 +1,19 @@
+{% extends "base.stencil" %}
+
+{% block title %}Have a break, have a kitchat ?{% endblock %}
+
+{% block content %}
+    <div class="jumbotron">
+        <h1 class="display-3">Sign In Kitchat</h1>
+        <hr class="my-4">
+        <form method="post" action="/signin">
+            <p>
+                <input type="text" placeholder="Your Pseudo" name="pseudo1" required="required" />
+                <input type="text" placeholder="Your Password" name="password1" required="required" />
+            </p>
+            <p class="lead">
+                <button type="submit" class="btn btn-primary btn-lg">Sign In</button>
+            </p>
+        </form>
+    </div>
+{% endblock %}
