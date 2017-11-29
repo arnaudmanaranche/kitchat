@@ -49,27 +49,21 @@ router.get("/") { request, response, next in
     // Get the current session
     sessionState = request.session
     
-    //Check if we have a session and it has a value for email
-    if let sessionState = sessionState, let pseudo = sessionState["pseudo"].string {
-        try response.render("room", context: [
-            "users": users,
-            "messages": messages,
-            "sessionState": sessionState,
-            ]).end()
+    //Check if we have a session and it has a value for pseudo
+    if let sessionState = sessionState, let _ = sessionState["pseudo"].string {
+        try response.render("room", context: ["sessionState": sessionState]).end()
     } else {
-        try response.render("index", context: ["users": users]).end()
+        try response.render("index", context: ["useless": "useless"]).end()
     }
 }
 
 router.get("/signin") { request, response, next in
-    if let sessionState = sessionState, let pseudo = sessionState["pseudo"].string {
-        try response.render("room", context: [
-            "users": users,
-            "messages": messages,
-            "sessionState": sessionState,
-            ]).end()
+    
+    //Check if we have a session and it has a value for pseudo
+    if let sessionState = sessionState, let _ = sessionState["pseudo"].string {
+        try response.redirect("room").end()
     } else {
-        try response.render("signin", context: ["test": ""]).end()
+        try response.render("signin", context: ["useless": "useless"]).end()
     }
 }
 
@@ -88,48 +82,54 @@ router.post("/login") { request, response, next in
         return
     }
     
-    let pseudo = data["pseudo1"]
-    let password = data["password1"]
-    
-    if let pseudoo = pseudo, let sessionState = sessionState {
-        sessionState["pseudo"] = JSON(pseudoo)
-        try response.render("room", context: [
-            "users": users,
-            "messages": messages,
-            "sessionState": sessionState,
-            ]).end()
-    }
+    let pseudoLogin = data["pseudo_login"]
+    let passwordLogin = data["password_login"]
     
     connection.connect() { error in
         if error != nil {
-            print("nok")
+            print("Error")
             return
         }
         else {
-            let query = Select(users.pseudo, users.password, from: users).where(users.pseudo == pseudo! && users.password == password!)
+            let query = Select(users.pseudo, users.password, from: users).where(
+                users.pseudo == pseudoLogin! && users.password == passwordLogin!
+            )
             
-            connection.execute(query: query) { result in
-                do {
-                    try response.redirect("/room").end()
+            connection.execute(query: query,onCompletion: { (result) in
+                if result.success {
+                    if result.asResultSet != nil {
+                        if let pseudo = pseudoLogin, let sessionState = sessionState {
+                            sessionState["pseudo"] = JSON(pseudo)
+                            do {
+                                try response.redirect("room").end()
+                            } catch {
+                                print("Error")
+                            }
+                        }
+                    } else {
+                        do {
+                            try response.redirect("/").end()
+                        }
+                        catch {
+                            print("Error")
+                        }
+                    }
                 }
-                catch {
+                else if result.asError != nil {
                     print("error")
                 }
-            }
+            })
+            connection.closeConnection()
         }
     }
 }
 
 router.get("/room") { request, response, next in
     
-    if let sessionState = sessionState, let pseudo = sessionState["pseudo"].string {
-        try response.render("room", context: [
-            "users": users,
-            "messages": messages,
-            "sessionState": sessionState,
-            ]).end()
+    if let sessionState = sessionState, let _ = sessionState["pseudo"].string {
+        try response.render("room", context: ["sessionState": sessionState]).end()
     } else {
-        try response.render("index", context: ["test": ""]).end()
+        try response.redirect("/").end()
     }
     
     connection.connect() { error in
@@ -139,7 +139,6 @@ router.get("/room") { request, response, next in
         }
         else {
             let query = Select(messages.content, from: messages)
-            
             connection.execute(query: query) { result in
                 if let resultSet = result.asResultSet {
                     var retString = ""
@@ -154,6 +153,7 @@ router.get("/room") { request, response, next in
                         retString.append("\n")
                     }
                     do {
+                        // TODO
                         try response.render("room", context: ["messages": retString]).end()
                     }
                     catch {
@@ -186,12 +186,16 @@ router.post("/room") { request, response, next in
         if error != nil {
             print("nok")
             return
-        }
-        else {
-            let query = Insert(into: messages, values: content)
+        } else {
+            let query = Insert(into: messages, values: content ?? "")
             
             connection.execute(query: query) { result in
-                print(query)
+                do {
+                    try response.redirect("/room").end()
+                }
+                catch {
+                    print("Error")
+                }
             }
         }
     }
@@ -218,7 +222,7 @@ router.post("/signin") { request, response, next in
             return
         }
         else {
-            let query = Insert(into: users, values: pseudo, password)
+            let query = Insert(into: users, values: pseudo ?? "", password ?? "")
             
             connection.execute(query: query) { result in
                 do {

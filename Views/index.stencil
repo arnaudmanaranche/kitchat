@@ -8,8 +8,8 @@
     <hr class="my-4">
     <form method="post" action="/login">
         <p>
-            <input type="text" placeholder="Your Pseudo" name="pseudo1" required="required" />
-            <input type="text" placeholder="Your Password" name="password1" required="required" />
+            <input type="text" placeholder="Your Pseudo" name="pseudo_login" required="required" />
+            <input type="text" placeholder="Your Password" name="password_login" required="required" />
         </p>
         <p class="lead">
             <button type="submit" class="btn btn-primary btn-lg">Login into Kitchat</button>
