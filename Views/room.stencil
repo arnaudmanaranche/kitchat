@@ -5,10 +5,12 @@
 
 {% block content %}
     <table class="table table-hover">
+{% for m in messages %}
         <tbody>
-            <div>{{ messages }}</div>
+            <p>{{ m.expediteur }} said {{ m.content }}</p>
         </tbody>
-    </table>
+{% endfor %}
+   </table>
     <table class="table">
         <tfooter>
             <form action="/room" method="post">

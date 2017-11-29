@@ -51,7 +51,7 @@ router.get("/") { request, response, next in
     
     //Check if we have a session and it has a value for pseudo
     if let sessionState = sessionState, let _ = sessionState["pseudo"].string {
-        try response.render("room", context: ["sessionState": sessionState]).end()
+        try response.redirect("room").end()
     } else {
         try response.render("index", context: ["useless": "useless"]).end()
     }
@@ -127,7 +127,7 @@ router.post("/login") { request, response, next in
 router.get("/room") { request, response, next in
     
     if let sessionState = sessionState, let _ = sessionState["pseudo"].string {
-        try response.render("room", context: ["sessionState": sessionState]).end()
+        print("Session")
     } else {
         try response.redirect("/").end()
     }
@@ -138,23 +138,11 @@ router.get("/room") { request, response, next in
             return
         }
         else {
-            let query = Select(messages.content, from: messages)
+            let query = Select(messages.content, messages.expediteur, from: messages)
             connection.execute(query: query) { result in
-                if let resultSet = result.asResultSet {
-                    var retString = ""
-                    
-                    for row in resultSet.rows {
-                        for value in row {
-                            if let value = value {
-                                let valueString = String(describing: value)
-                                retString.append("\(valueString)")
-                            }
-                        }
-                        retString.append("\n")
-                    }
+                if let rows = result.asRows {
                     do {
-                        // TODO
-                        try response.render("room", context: ["messages": retString]).end()
+                        try response.render("room", context: ["messages": rows, "sessionState": sessionState] ).end()
                     }
                     catch {
                         print("error")
@@ -170,6 +158,12 @@ router.get("/room") { request, response, next in
 
 router.post("/room") { request, response, next in
     
+    if let sessionState = sessionState, let _ = sessionState["pseudo"].string {
+        print("Session")
+    } else {
+        try response.redirect("/").end()
+    }
+    
     guard let body = request.body else {
         try response.status(.badRequest).end()
         return
@@ -181,13 +175,14 @@ router.post("/room") { request, response, next in
     }
     
     let content = data["content"]
+    let expediteur = sessionState!["pseudo"].string
     
     connection.connect() { error in
         if error != nil {
             print("nok")
             return
         } else {
-            let query = Insert(into: messages, values: content ?? "")
+            let query = Insert(into: messages, values: content ?? "", expediteur ?? "")
             
             connection.execute(query: query) { result in
                 do {
@@ -213,8 +208,8 @@ router.post("/signin") { request, response, next in
         return
     }
     
-    let pseudo = data["pseudo"]
-    let password = data["password"]
+    let pseudo = data["pseudo_signin"]
+    let password = data["password_signin"]
     
     connection.connect() { error in
         if error != nil {
